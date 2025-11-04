@@ -1,5 +1,5 @@
 version: 1.2
 workflows:
-name: test
+  - name: test
     subclass: WDL
     primaryDescriptorPath: test.wdl
