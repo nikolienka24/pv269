@@ -1,6 +1,6 @@
 version 1.0
 
-workflow count_Ns_fast {
+workflow countNs_parallel {
   input {
     File data
   }
@@ -31,16 +31,19 @@ task SplitFasta {
   }
 
   command <<<
-    awk '/^>/ {
-            if (out) close(out);
-            out = (substr($0,2) ".fa")
-         }
-         {
-            print $0 "\n" > out
-         }' ~{input_file}
+        awk '
+            /^>/ {
+                count++;
+                if (out) close(out);
+                out = sprintf("seq_%d.fa", count);
+            }
+            {
+                print $0 > out;
+            }
+        ' ~{input_file}
 
-    ls *.fa > list.txt
-  >>>
+        ls seq_*.fa > list.txt
+    >>>
 
   output {
     Array[File] seq_files = read_lines("list.txt")
