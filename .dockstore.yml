@@ -3,3 +3,6 @@ workflows:
   - name: test
     subclass: WDL
     primaryDescriptorPath: /test.wdl
+  - name: countNs
+    subclass: WDL
+    primaryDescriptorPath: /countNs.wdl
