@@ -6,3 +6,6 @@ workflows:
   - name: countNs
     subclass: WDL
     primaryDescriptorPath: /countNs.wdl
+  - name: countNs_parallel
+    subclass: WDL
+    primaryDescriptorPath: /countNs.parallel.wdl
