@@ -22,7 +22,6 @@ workflow countNs_parallel {
   output {
     Int total_Ns = SumNs.sum
   }
-
 }
 
 task SplitFasta {
@@ -32,57 +31,38 @@ task SplitFasta {
 
   command <<<
     set -euo pipefail
+    mkdir -p seqs
 
-    mkdir seqs
+    seqtk seq ~{input_file} | awk '/^>/{f="seqs/seq_" ++i ".fa"} {print > f}'
 
-    # Normalize newlines
-    sed 's/\r$//' ~{input_file} > cleaned.fa
-
-    awk -v outdir="seqs" '
-      BEGIN { count = 0 }
-      /^>/ {
-          count++
-          out = sprintf("%s/seq_%d.fa", outdir, count)
-          print $0 > out
-          next
-      }
-      {
-          if (count == 0) {
-              count = 1
-              out = sprintf("%s/seq_%d.fa", outdir, count)
-          }
-          print $0 > out
-      }
-    ' cleaned.fa
-
-    ls seqs/*.fa > list.txt
+    ls -l seqs
   >>>
 
   output {
-    Array[File] seq_files = read_lines("list.txt")
+    Array[File] seq_files = glob("seqs/*.fa")
+  }
+
+  runtime {
+    docker: "biocontainers/seqtk:v1.3-1-deb_cv1"
+  }
+}
+
+task CountNs {
+  input {
+    File input_file
+  }
+
+  command <<<
+    grep -o -i "N" ~{input_file} | wc -l > count.txt || echo 0 > count.txt
+  >>>
+
+  output {
+    Int total_Ns = read_int("count.txt")
   }
 
   runtime {
     docker: "ubuntu:22.04"
   }
-}
-
-task CountNs {
-    input {
-        File input_file
-    }
-
-    command <<<
-        grep -o -i "N" ~{input_file} | wc -l > count.txt
-    >>>
-
-    output {
-        Int total_Ns = read_int("count.txt")
-    }
-
-    runtime {
-        docker: "ubuntu:22.04"
-    }
 }
 
 task SumNs {
