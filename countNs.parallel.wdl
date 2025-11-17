@@ -31,15 +31,29 @@ task SplitFasta {
   }
 
   command <<<
+    set -euo pipefail
+
     mkdir seqs
 
+    # Normalize newlines
+    sed 's/\r$//' ~{input_file} > cleaned.fa
+
     awk -v outdir="seqs" '
+      BEGIN { count = 0 }
       /^>/ {
-          count++;
-          out = sprintf("%s/seq_%d.fa", outdir, count);
+          count++
+          out = sprintf("%s/seq_%d.fa", outdir, count)
+          print $0 > out
+          next
       }
-      { print $0 > out; }
-    ' ~{input_file}
+      {
+          if (count == 0) {
+              count = 1
+              out = sprintf("%s/seq_%d.fa", outdir, count)
+          }
+          print $0 > out
+      }
+    ' cleaned.fa
 
     ls seqs/*.fa > list.txt
   >>>
@@ -52,7 +66,6 @@ task SplitFasta {
     docker: "ubuntu:22.04"
   }
 }
-
 
 task CountNs {
     input {
