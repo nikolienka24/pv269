@@ -31,19 +31,18 @@ task SplitFasta {
   }
 
   command <<<
-        awk '
-            /^>/ {
-                count++;
-                if (out) close(out);
-                out = sprintf("seq_%d.fa", count);
-            }
-            {
-                print $0 > out;
-            }
-        ' ~{input_file}
+    mkdir seqs
 
-        ls seq_*.fa > list.txt
-    >>>
+    awk -v outdir="seqs" '
+      /^>/ {
+          count++;
+          out = sprintf("%s/seq_%d.fa", outdir, count);
+      }
+      { print $0 > out; }
+    ' ~{input_file}
+
+    ls seqs/*.fa > list.txt
+  >>>
 
   output {
     Array[File] seq_files = read_lines("list.txt")
@@ -53,6 +52,7 @@ task SplitFasta {
     docker: "ubuntu:22.04"
   }
 }
+
 
 task CountNs {
     input {
